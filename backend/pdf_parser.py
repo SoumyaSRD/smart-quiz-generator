@@ -2,77 +2,69 @@ import pdfplumber
 import re
 import random
 
-# Improved Regex to be more flexible with question and option markers
-# It matches:
-# [Number] (optional) [Question Text]
-# A) or A. or (A) [Option A]
-# B) or B. or (B) [Option B]
-# C) or C. or (C) [Option C]
-# D) or D. or (D) [Option D]
-# Answer: [Letter]
-QUESTION_PATTERN = re.compile(
-    r"(?:(?P<id>\d+)\b[.)]?\s*)?"               # Optional ID like '1.' or '1)' or '1'
-    r"(?P<question>.+?)"                         # Question text (non-greedy)
-    r"\s*(?:\(?A[.)]|\(A\))\s*(?P<option_a>.+?)" # Matches A) or A. or (A)
-    r"\s*(?:\(?B[.)]|\(B\))\s*(?P<option_b>.+?)"
-    r"\s*(?:\(?C[.)]|\(C\))\s*(?P<option_c>.+?)"
-    r"\s*(?:\(?D[.)]|\(D\))\s*(?P<option_d>.+?)"
-    r"\s*Answer:\s*(?P<answer>[A-D])",
-    re.DOTALL | re.IGNORECASE
-)
-
 def extract_questions_from_pdf(file_path):
-    questions = []
     try:
         with pdfplumber.open(file_path) as pdf:
-            full_text = ""
-            for page in pdf.pages:
-                text = page.extract_text()
-                if text:
-                    full_text += text + "\n"
-            
-            # Clean up the text a bit
-            full_text = full_text.replace('\r', '')
-            questions = extract_questions_from_text(full_text)
+            full_text = "\n".join([p.extract_text() or "" for p in pdf.pages])
+            return extract_questions_from_text(full_text)
     except Exception as e:
         print(f"Error parsing PDF {file_path}: {e}")
-    
-    return questions
+    return []
 
 def extract_questions_from_text(text):
-    questions = []
     if not text:
         return []
-    
-    # Pre-processing: remove carriage returns and normalize whitespace slightly
+
+    # 1. Normalize text: remove \r, collapse multiple spaces, handle weird newlines
     text = text.replace('\r', '')
     
-    matches = list(QUESTION_PATTERN.finditer(text))
+    # 2. Use a Global Regex that finds the whole block: [Question] [Options] [Answer]
+    # This regex looks for:
+    # - A question (anything until it sees 'A)' or 'A.')
+    # - Option A, B, C, D in sequence
+    # - An Answer line
+    PATTERN = re.compile(
+        r"(?P<question>(?:(?!\b[A-D][.)]).)+)\s*"          # Question text
+        r"(?:\(?A[.)]|\(A\)|\[A\])\s*(?P<opt_a>.*?)\s*"    # Option A
+        r"(?:\(?B[.)]|\(B\)|\[B\])\s*(?P<opt_b>.*?)\s*"    # Option B
+        r"(?:\(?C[.)]|\(C\)|\[C\])\s*(?P<opt_c>.*?)\s*"    # Option C
+        r"(?:\(?D[.)]|\(D\)|\[D\])\s*(?P<opt_d>.*?)\s*"    # Option D
+        r"Answer:\s*(?P<answer>[A-D])",                    # Answer
+        re.DOTALL | re.IGNORECASE
+    )
+
+    questions = []
+    matches = list(PATTERN.finditer(text))
     
     for i, match in enumerate(matches, 1):
-        raw_id = match.group("id")
-        q_id = raw_id if raw_id else str(i)
+        q_text = match.group("question").strip()
         
-        # Clean the extracted text parts
-        question_text = match.group("question").strip()
-        # If there's a newline at the start of the question text (common with finditer), remove it
-        question_text = re.sub(r'^\s+', '', question_text)
-        
+        # Cleanup: Remove leading numbers like "1. ", "2) " from the question text
+        q_text = re.sub(r'^\d+\b[.)]?\s*', '', q_text)
+        # Cleanup: If it's multi-line, collapse newlines into spaces
+        q_text = " ".join(q_text.split())
+
         questions.append({
-            "id": q_id,
-            "question": question_text,
+            "id": str(i),
+            "question": q_text,
             "options": {
-                "A": match.group("option_a").strip(),
-                "B": match.group("option_b").strip(),
-                "C": match.group("option_c").strip(),
-                "D": match.group("option_d").strip(),
+                "A": match.group("opt_a").strip(),
+                "B": match.group("opt_b").strip(),
+                "C": match.group("opt_c").strip(),
+                "D": match.group("opt_d").strip(),
             },
             "answer": match.group("answer").strip().upper()
         })
-        
+
+    print(f"DEBUG: Extracted {len(questions)} questions from text input.")
     return questions
 
 def select_random_questions(questions, count):
-    if count <= 0:
+    if not questions:
         return []
+    # Fallback: if count is 0 but we have questions, pick all (up to 50) 
+    # to avoid "No questions" error if user forgot to set count
+    if count <= 0:
+        return random.sample(questions, min(len(questions), 10))
+        
     return random.sample(questions, min(len(questions), count))

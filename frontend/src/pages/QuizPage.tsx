@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuiz, Question } from '../context/QuizContext';
+import { useQuiz } from '../context/QuizContext';
+import type { Question } from '../context/QuizContext';
 import { ChevronLeft, ChevronRight, Send, Clock, Layout, List } from 'lucide-react';
 
 const QuizPage: React.FC = () => {

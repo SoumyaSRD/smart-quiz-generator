@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuiz, Question } from '../context/QuizContext';
+import { useQuiz } from '../context/QuizContext';
+import type { Question } from '../context/QuizContext';
 import { CheckCircle2, XCircle, AlertCircle, RefreshCcw, Check, X } from 'lucide-react';
 
 const ResultPage: React.FC = () => {

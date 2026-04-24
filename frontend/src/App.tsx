@@ -6,9 +6,13 @@ import QuizPage from './pages/QuizPage';
 import ResultPage from './pages/ResultPage';
 
 const App: React.FC = () => {
+  // Use Vite's built-in BASE_URL which respects the 'base' config in vite.config.ts
+  // We remove the trailing slash as react-router-dom prefers it that way for basename
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
+  
   return (
     <QuizProvider>
-      <Router basename="/smart-quiz-generator">
+      <Router basename={basename}>
         <div className="min-h-screen bg-gray-50 text-gray-900">
           <Routes>
             <Route path="/" element={<SetupPage />} />
