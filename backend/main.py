@@ -1,31 +1,37 @@
+import os
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-import os
 import shutil
 import random
 import uuid
-import json
-from typing import List, Dict, Optional
+from typing import List
 from pdf_parser import extract_questions_from_pdf, extract_questions_from_text
 
 app = FastAPI()
 
-# Enable CORS for frontend
+# Get allowed origins from environment variable or default to localhost
+# In production, set ALLOWED_ORIGINS to your GitHub Pages URL
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = "temp_uploads"
+UPLOAD_DIR = "/tmp/temp_uploads" if os.getenv("RENDER") else "temp_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 CATEGORIES = [
     "English", "Aptitude", "Reasoning", "Odia", 
     "Current Affairs", "Computer", "General Knowledge", "Mixed"
 ]
+
+@app.get("/")
+async def root():
+    return {"message": "Quiz Generator API is running"}
 
 @app.post("/api/upload-and-generate")
 async def upload_and_generate(
@@ -97,57 +103,54 @@ async def upload_and_generate(
     session_dir = os.path.join(UPLOAD_DIR, session_id)
     os.makedirs(session_dir, exist_ok=True)
     
-    for category in CATEGORIES:
-        category_questions = []
-        
-        # 1. Extract from PDFs
-        files = file_mapping.get(category)
-        if files:
-            for file in files:
-                file_path = os.path.join(session_dir, file.filename)
-                with open(file_path, "wb") as buffer:
-                    shutil.copyfileobj(file.file, buffer)
-                
-                extracted = extract_questions_from_pdf(file_path)
-                category_questions.extend(extracted)
-        
-        # 2. Extract from pasted text
-        pasted_text = text_mapping.get(category, "")
-        if pasted_text:
-            extracted_text = extract_questions_from_text(pasted_text)
-            category_questions.extend(extracted_text)
+    try:
+        for category in CATEGORIES:
+            category_questions = []
             
-        # Pick requested number from this category
-        num_to_pick = config_mapping.get(category, 0)
-        if category_questions and num_to_pick > 0:
-            selected = random.sample(
-                category_questions, 
-                min(len(category_questions), num_to_pick)
-            )
-            # Add category info to each question
-            for q in selected:
-                q["category"] = category
-            all_selected_questions.extend(selected)
+            # 1. Extract from PDFs
+            files = file_mapping.get(category)
+            if files:
+                for file in files:
+                    file_path = os.path.join(session_dir, file.filename)
+                    with open(file_path, "wb") as buffer:
+                        shutil.copyfileobj(file.file, buffer)
+                    
+                    extracted = extract_questions_from_pdf(file_path)
+                    category_questions.extend(extracted)
+            
+            # 2. Extract from pasted text
+            pasted_text = text_mapping.get(category, "")
+            if pasted_text:
+                extracted_text = extract_questions_from_text(pasted_text)
+                category_questions.extend(extracted_text)
+                
+            # Pick requested number from this category
+            num_to_pick = config_mapping.get(category, 0)
+            if category_questions and num_to_pick > 0:
+                selected = random.sample(
+                    category_questions, 
+                    min(len(category_questions), num_to_pick)
+                )
+                for q in selected:
+                    q["category"] = category
+                all_selected_questions.extend(selected)
 
-    # Shuffling all selected questions
-    random.shuffle(all_selected_questions)
-    
-    # Trim to total_questions if needed
-    final_questions = all_selected_questions[:total_questions]
-    
-    # Cleanup temp session files
-    shutil.rmtree(session_dir, ignore_errors=True)
-    
-    return {
-        "questions": final_questions,
-        "config": {
-            "total_questions": total_questions,
-            "marks_per_question": marks_per_question,
-            "negative_marks": negative_marks,
-            "duration_minutes": duration_minutes
+        random.shuffle(all_selected_questions)
+        final_questions = all_selected_questions[:total_questions]
+        
+        return {
+            "questions": final_questions,
+            "config": {
+                "total_questions": total_questions,
+                "marks_per_question": marks_per_question,
+                "negative_marks": negative_marks,
+                "duration_minutes": duration_minutes
+            }
         }
-    }
+    finally:
+        shutil.rmtree(session_dir, ignore_errors=True)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
