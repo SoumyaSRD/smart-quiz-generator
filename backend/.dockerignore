@@ -1,0 +1,12 @@
+__pycache__
+venv
+.env
+temp_uploads
+.git
+.github
+Dockerfile
+.dockerignore
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache

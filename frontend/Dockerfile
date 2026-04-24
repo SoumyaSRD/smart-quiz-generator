@@ -1,5 +1,5 @@
 # --- Build Stage ---
-FROM node:24-alpine AS build
+FROM node:24.15-alpine AS build
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ CMD ["nginx", "-g", "daemon off;"]
 
 
 # --- Development Stage ---
-FROM node:24-alpine AS development
+FROM node:24.15-alpine AS development
 
 WORKDIR /app
 
