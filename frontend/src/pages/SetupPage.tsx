@@ -9,19 +9,20 @@ const CATEGORIES = [
   "Current Affairs", "Computer", "General Knowledge"
 ];
 
-const SetupPage = () => {
+const SetupPage: React.FC = () => {
   const navigate = useNavigate();
   const { startQuiz } = useQuiz();
-  const [loading, setLoading] = useState(false);
-  const [files, setFiles] = useState({});
-  const [texts, setTexts] = useState({});
-  const [activeModalCategory, setActiveModalCategory] = useState(null);
-  const [tempText, setTempText] = useState("");
-  const [quizMode, setQuizMode] = useState("multiple");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [files, setFiles] = useState<Record<string, File[]>>({});
+  const [texts, setTexts] = useState<Record<string, string>>({});
+  const [activeModalCategory, setActiveModalCategory] = useState<string | null>(null);
+  const [tempText, setTempText] = useState<string>("");
+  const [quizMode, setQuizMode] = useState<string>("multiple");
 
-  const [categoryConfigs, setCategoryConfigs] = useState(
+  const [categoryConfigs, setCategoryConfigs] = useState<Record<string, number>>(
     [...CATEGORIES, "Mixed"].reduce((acc, cat) => ({ ...acc, [cat]: 0 }), {})
   );
+  
   const [generalConfig, setGeneralConfig] = useState({
     total_questions: 10,
     marks_per_question: 1,
@@ -31,31 +32,33 @@ const SetupPage = () => {
 
   const displayCategories = quizMode === "multiple" ? CATEGORIES : ["Mixed"];
 
-  const handleFileChange = (category, e) => {
-    const selectedFiles = Array.from(e.target.files);
+  const handleFileChange = (category: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
     setFiles(prev => ({ ...prev, [category]: selectedFiles }));
   };
 
-  const openTextModal = (category) => {
+  const openTextModal = (category: string) => {
     setActiveModalCategory(category);
     setTempText(texts[category] || "");
   };
 
   const saveText = () => {
-    setTexts(prev => ({ ...prev, [activeModalCategory]: tempText }));
+    if (activeModalCategory) {
+      setTexts(prev => ({ ...prev, [activeModalCategory]: tempText }));
+    }
     setActiveModalCategory(null);
     setTempText("");
   };
 
-  const handleCategoryConfigChange = (category, value) => {
+  const handleCategoryConfigChange = (category: string, value: string) => {
     setCategoryConfigs(prev => ({ ...prev, [category]: parseInt(value) || 0 }));
   };
 
-  const handleGeneralConfigChange = (name, value) => {
+  const handleGeneralConfigChange = (name: string, value: string) => {
     setGeneralConfig(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -77,16 +80,16 @@ const SetupPage = () => {
 
     // Add category configs
     Object.entries(categoryConfigs).forEach(([category, value]) => {
-      formData.append(`config_${category.replace(' ', '')}`, value);
+      formData.append(`config_${category.replace(' ', '')}`, value.toString());
     });
 
     // Add general config
     Object.entries(generalConfig).forEach(([name, value]) => {
-      formData.append(name, value);
+      formData.append(name, value.toString());
     });
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000';
       const response = await axios.post(`${apiUrl}/api/upload-and-generate`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });

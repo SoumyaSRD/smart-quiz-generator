@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuiz } from '../context/QuizContext';
+import { useQuiz, Question } from '../context/QuizContext';
 import { CheckCircle2, XCircle, AlertCircle, RefreshCcw, Check, X } from 'lucide-react';
 
-const ResultPage = () => {
+const ResultPage: React.FC = () => {
   const navigate = useNavigate();
-  const { questions, userAnswers, calculateResults, isSubmitted } = useQuiz();
+  const { questions, userAnswers, calculateResults, isSubmitted, config } = useQuiz();
 
   if (!isSubmitted) {
     navigate('/');
@@ -13,8 +13,7 @@ const ResultPage = () => {
   }
 
   const { score, correct, wrong, skipped, totalQuestions } = calculateResults();
-  const percentage = ((score / (totalQuestions * (questions[0]?.marks_per_question || 1))) * 100).toFixed(1);
-
+  
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8">
       {/* Summary Card */}
@@ -74,7 +73,13 @@ const ResultPage = () => {
   );
 };
 
-const ReviewCard = ({ question, index, userAnswer }) => {
+interface ReviewCardProps {
+  question: Question;
+  index: number;
+  userAnswer: string | undefined;
+}
+
+const ReviewCard: React.FC<ReviewCardProps> = ({ question, index, userAnswer }) => {
   const isCorrect = userAnswer === question.answer;
   const isSkipped = !userAnswer;
 

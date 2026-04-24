@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuiz } from '../context/QuizContext';
+import { useQuiz, Question } from '../context/QuizContext';
 import { ChevronLeft, ChevronRight, Send, Clock, Layout, List } from 'lucide-react';
 
-const QuizPage = () => {
+const QuizPage: React.FC = () => {
   const navigate = useNavigate();
   const { 
     questions, 
@@ -11,12 +11,11 @@ const QuizPage = () => {
     selectAnswer, 
     timeRemaining, 
     setTimeRemaining, 
-    submitQuiz,
-    config
+    submitQuiz
   } = useQuiz();
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [viewAll, setViewAll] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [viewAll, setViewAll] = useState<boolean>(false);
 
   useEffect(() => {
     if (questions.length === 0) {
@@ -36,14 +35,14 @@ const QuizPage = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [questions, navigate]);
+  }, [questions, navigate, setTimeRemaining]);
 
   const handleSubmit = () => {
     submitQuiz();
     navigate('/result');
   };
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -151,17 +150,6 @@ const QuizPage = () => {
                 </button>
               ))}
             </div>
-            <div className="mt-6 space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-600 rounded"></div> <span>Current</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div> <span>Answered</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-gray-100 rounded"></div> <span>Not Answered</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -169,7 +157,14 @@ const QuizPage = () => {
   );
 };
 
-const QuestionCard = ({ question, index, selectedOption, onSelect }) => {
+interface QuestionCardProps {
+  question: Question;
+  index: number;
+  selectedOption: string | undefined;
+  onSelect: (option: string) => void;
+}
+
+const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, selectedOption, onSelect }) => {
   return (
     <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-4">
