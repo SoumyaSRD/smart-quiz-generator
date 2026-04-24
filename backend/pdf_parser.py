@@ -2,15 +2,15 @@ import pdfplumber
 import re
 import random
 
-# Regex to match:
-# 1. Question text
+# Updated Regex to match:
+# [Number]. (Optional) Question text
 # A) Option A
 # B) Option B
 # C) Option C
 # D) Option D
 # Answer: C
 QUESTION_PATTERN = re.compile(
-    r"(?P<id>\d+)\.\s*(?P<question>.*?)\s*"
+    r"(?:(?P<id>\d+)\.\s*)?(?P<question>.*?)\s*"
     r"A\)\s*(?P<option_a>.*?)\s*"
     r"B\)\s*(?P<option_b>.*?)\s*"
     r"C\)\s*(?P<option_c>.*?)\s*"
@@ -41,9 +41,13 @@ def extract_questions_from_text(text):
         return []
         
     matches = QUESTION_PATTERN.finditer(text)
-    for match in matches:
+    for i, match in enumerate(matches, 1):
+        # Use the ID from the text if it exists, otherwise use the sequence number
+        raw_id = match.group("id")
+        q_id = raw_id if raw_id else str(i)
+        
         questions.append({
-            "id": match.group("id"),
+            "id": q_id,
             "question": match.group("question").strip(),
             "options": {
                 "A": match.group("option_a").strip(),
