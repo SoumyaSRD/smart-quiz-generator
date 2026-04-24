@@ -8,7 +8,7 @@ import ResultPage from './pages/ResultPage';
 function App() {
   return (
     <QuizProvider>
-      <Router>
+      <Router basename="/smart-quiz-generator">
         <div className="min-h-screen bg-gray-50 text-gray-900">
           <Routes>
             <Route path="/" element={<SetupPage />} />
