@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Palette, X, Sun, Moon, Zap, Ship, Ghost, Waves, Mountain, Trees, Droplets, Wind } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
-import type { ThemeType } from '../context/ThemeContext';
+import { useThemeStore } from '../store/useThemeStore';
+import type { ThemeType } from '../store/useThemeStore';
 
 export const ThemeOffcanvas: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useThemeStore();
 
   const themeGroups = [
     {

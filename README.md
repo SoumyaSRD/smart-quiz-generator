@@ -1,57 +1,63 @@
-# Quiz Generator Setup Instructions
+# 🧠 Enterprise Quiz Generator Pro
 
-This project consists of a **FastAPI backend** and a **React (Vite) frontend**.
+A professional, high-performance Full-Stack MCQ Generator system built with **React (TypeScript)**, **Zustand**, **Sass**, and **FastAPI**.
 
-## 🚀 Backend Setup (Python)
+## 🚀 Key Features
 
-1. **Navigate to the backend directory:**
-   ```bash
-   cd backend
-   ```
-
-2. **Create a virtual environment (optional but recommended):**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run the FastAPI server:**
-   ```bash
-   python main.py
-   ```
-   The backend will start at `http://localhost:8000`.
+- **Multi-Source Input**: Upload multiple PDF files or paste raw text categorized into 7+ subjects.
+- **Enterprise Architecture**: 
+  - **State Management**: Powered by **Zustand** with persistent storage middleware.
+  - **Theming System**: Robust CSS-Variable driven architecture with **Sass** mixins.
+  - **Type Safety**: 100% **TypeScript** coverage for frontend components and stores.
+- **Dynamic Themes**: Switch between 10+ premium themes (Light, Dark, Solo Leveling, Batman, One Piece, and Nature Collection).
+- **Intelligent Parser**: Robust Regex and State-Machine parsing to handle messy PDF extractions and unnumbered text blocks.
+- **Auto-Formatter**: Built-in text utility to normalize spacing and handle "Answer: X" lines automatically.
+- **Multi-Lingual**: Full i18n support for English, Hindi, Odia, French, and Spanish.
 
 ---
 
-## 💻 Frontend Setup (React)
+## 🛠️ Technical Stack
 
-1. **Navigate to the frontend directory:**
-   ```bash
-   cd frontend
-   ```
+### Frontend
+- **Framework**: React 18 (Vite)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS + Sass (SCSS)
+- **State**: Zustand (Middleware: Persist)
+- **Internationalization**: react-i18next
+- **Icons**: Lucide React
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
-   The frontend will start at `http://localhost:5173`.
+### Backend
+- **Framework**: FastAPI (Python 3.11+)
+- **Parser**: pdfplumber + Advanced Regex
+- **Deployment**: Dockerized (Dev/Prod stages)
 
 ---
 
-## 📄 Sample PDF Format
+## 🏗️ Getting Started
 
-To ensure the parser extracts questions correctly, your PDFs should follow this format:
+### 1. Backend Setup
+```bash
+cd backend
+pip install -r requirements.txt
+python main.py
+```
 
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### 3. Docker (Recommended)
+```bash
+docker compose up --build
+```
+
+---
+
+## 📝 MCQ Standard Format
+The system performs best with this structure:
 ```text
 1. What is the capital of France?
 A) London
@@ -59,40 +65,22 @@ B) Berlin
 C) Paris
 D) Madrid
 Answer: C
-
-2. Which planet is known as the Red Planet?
-A) Venus
-B) Mars
-C) Jupiter
-D) Saturn
-Answer: B
 ```
+*Note: The auto-formatter will handle missing numbers and inconsistent spacing automatically.*
 
 ---
 
-## 🧪 Example Extracted JSON (API Response)
+## 🍱 Themes Available
+- **Core**: Light, Dark
+- **Anime**: Solo Leveling (Shadow Monarch), One Piece (Grand Line)
+- **Nature**: Deep Sea, Green Hills, Cold Mountain, Blue River, Waterfall
+- **Special**: The Batman (High Contrast Black/Yellow)
 
-```json
-{
-  "questions": [
-    {
-      "id": "1",
-      "question": "What is the capital of France?",
-      "options": {
-        "A": "London",
-        "B": "Berlin",
-        "C": "Paris",
-        "D": "Madrid"
-      },
-      "answer": "C",
-      "category": "General Knowledge"
-    }
-  ],
-  "config": {
-    "total_questions": 10,
-    "marks_per_question": 1.0,
-    "negative_marks": 0.0,
-    "duration_minutes": 10
-  }
-}
-```
+---
+
+## 🤝 Contributing
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/NewTheme`)
+3. Commit changes (`git commit -m 'Add New Theme'`)
+4. Push to the branch (`git push origin feature/NewTheme`)
+5. Open a Pull Request

@@ -1,0 +1,76 @@
+@use 'sass:map';
+
+// Define core theme maps
+$themes: (
+  "light": (
+    "bg-main": #f8fafc,
+    "bg-card": #ffffff,
+    "text-main": #0f172a,
+    "text-muted": #64748b,
+    "accent": #3b82f6,
+    "border": #e2e8f0,
+    "input-bg": #ffffff,
+  ),
+  "dark": (
+    "bg-main": #0f172a,
+    "bg-card": #1e293b,
+    "text-main": #f8fafc,
+    "text-muted": #94a3b8,
+    "accent": #3b82f6,
+    "border": #334155,
+    "input-bg": #1e293b,
+  ),
+  "solo-leveling": (
+    "bg-main": #020617,
+    "bg-card": #0f172a,
+    "text-main": #f1f5f9,
+    "text-muted": #64748b,
+    "accent": #6366f1,
+    "border": #1e293b,
+    "input-bg": #0f172a,
+  ),
+  "one-piece": (
+    "bg-main": #fff7ed,
+    "bg-card": #ffffff,
+    "text-main": #7c2d12,
+    "text-muted": #9a3412,
+    "accent": #ef4444,
+    "border": #fed7aa,
+    "input-bg": #fffcf2,
+  ),
+  "batman": (
+    "bg-main": #000000,
+    "bg-card": #111111,
+    "text-main": #e2e8f0,
+    "text-muted": #94a3b8,
+    "accent": #facc15,
+    "border": #333333,
+    "input-bg": #000000,
+  ),
+  "nature-sea": (
+    "bg-main": #f0fdfa,
+    "bg-card": #ffffff,
+    "text-main": #134e4a,
+    "text-muted": #0d9488,
+    "accent": #0ea5e9,
+    "border": #ccfbf1,
+    "input-bg": #f8fafc,
+  )
+);
+
+@mixin apply-theme-vars($theme-name) {
+  $theme: map.get($themes, $theme-name);
+  @each $key, $value in $theme {
+    --#{$key}: #{$value};
+  }
+}
+
+:root {
+  @include apply-theme-vars("light");
+}
+
+@each $name, $map in $themes {
+  [data-theme='#{$name}'] {
+    @include apply-theme-vars($name);
+  }
+}

@@ -1,0 +1,39 @@
+@use 'themes/definitions' as *;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 min-h-screen;
+    font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+  }
+
+  select option {
+    @apply bg-[var(--bg-card)] text-[var(--text-main)];
+  }
+}
+
+@layer components {
+  .theme-card {
+    @apply bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-sm transition-all duration-300;
+  }
+
+  .theme-input {
+    @apply bg-[var(--input-bg)] border border-[var(--border)] text-[var(--text-main)] rounded-xl px-4 py-2 focus:ring-2 focus:ring-[var(--accent)] outline-none transition-all duration-200;
+  }
+
+  .theme-button-primary {
+    @apply bg-[var(--accent)] hover:opacity-90 text-white font-bold rounded-xl px-6 py-3 transition-all duration-200 active:scale-95 disabled:opacity-50;
+  }
+
+  .theme-text-muted {
+    @apply text-[var(--text-muted)];
+  }
+
+  .theme-border {
+    @apply border-[var(--border)];
+  }
+}
