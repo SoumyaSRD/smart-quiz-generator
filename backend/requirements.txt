@@ -3,3 +3,6 @@ uvicorn
 pdfplumber
 python-multipart
 pydantic
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv

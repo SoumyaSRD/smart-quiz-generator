@@ -1,26 +1,23 @@
-/**
- * Formats MCQ text by:
- * 1. Collapsing multiple spaces/newlines into a clean single structure.
- * 2. Ensuring the 'Answer: X' line has a clean newline before it.
- * 3. Removing leading numbers from the question text for a cleaner UI.
- */
-export const formatMcqText = (text: string): { formatted: string; count: number } => {
-  if (!text) return { formatted: '', count: 0 };
+// This logic is identical to the textFormatter.ts but runs in a background thread
+// to keep the UI smooth during massive text pastes.
 
-  // 1. Initial cleanup: normalize whitespace
+self.onmessage = (e: MessageEvent) => {
+  const { text } = e.data;
+  if (!text) {
+    self.postMessage({ formatted: '', count: 0 });
+    return;
+  }
+
   let cleanText = text.replace(/\r\n/g, '\n').replace(/\s+/g, ' ').trim();
-
-  // 2. Identify and mark key components
   cleanText = cleanText.replace(/\b([A-D])[)\.]\s+/g, '\n[OPT]$1) ');
   cleanText = cleanText.replace(/\b(Answer:\s*[A-D])/gi, '\n[ANS]$1\n[END_BLOCK]\n');
 
-  // 3. Split by the block terminator
-  const rawBlocks = cleanText.split('[END_BLOCK]').map(b => b.trim()).filter(b => b !== '');
+  const rawBlocks = cleanText.split('[END_BLOCK]').map((b: string) => b.trim()).filter((b: string) => b !== '');
   
   const formattedBlocks: string[] = [];
   let currentQuestionNumber = 1;
 
-  rawBlocks.forEach((block) => {
+  rawBlocks.forEach((block: string) => {
     const lines = block.split('\n').map(l => l.trim()).filter(l => l !== '');
     if (lines.length === 0) return;
 
@@ -51,17 +48,8 @@ export const formatMcqText = (text: string): { formatted: string; count: number 
     }
   });
 
-  return {
+  self.postMessage({
     formatted: formattedBlocks.join('\n\n'),
     count: formattedBlocks.length
-  };
-};
-
-/**
- * Validates if the text block contains at least one valid MCQ pattern.
- */
-export const isValidMcqFormat = (text: string): boolean => {
-  const pattern = /[A-D][.)\]]/i;
-  const hasAnswer = /Answer:/i.test(text);
-  return pattern.test(text) && hasAnswer;
+  });
 };

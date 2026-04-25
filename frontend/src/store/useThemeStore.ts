@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 export type ThemeType = 
   | 'light' 
   | 'dark' 
+  | 'animated-dark'
   | 'solo-leveling' 
   | 'one-piece' 
   | 'batman' 

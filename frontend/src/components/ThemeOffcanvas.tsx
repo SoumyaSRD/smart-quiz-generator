@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, X, Sun, Moon, Zap, Ship, Ghost, Waves, Mountain, Trees, Droplets, Wind } from 'lucide-react';
+import { Palette, X, Sun, Moon, Zap, Ship, Ghost, Waves, Mountain, Trees, Droplets, Wind, Smartphone, Sparkles } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import type { ThemeType } from '../store/useThemeStore';
 
@@ -12,7 +12,8 @@ export const ThemeOffcanvas: React.FC = () => {
       title: "Core",
       items: [
         { id: 'light' as ThemeType, label: 'Light Mode', icon: Sun, color: 'bg-white text-gray-900 border-gray-200' },
-        { id: 'dark' as ThemeType, label: 'Dark Mode', icon: Moon, color: 'bg-gray-800 text-white border-gray-700' },
+        { id: 'dark' as ThemeType, label: 'Dark Mode', icon: Smartphone, color: 'bg-black text-white border-zinc-800' },
+        { id: 'animated-dark' as ThemeType, label: 'Animated Dark', icon: Sparkles, color: 'bg-gradient-to-br from-gray-900 to-black text-purple-400 border-purple-500/30' },
       ]
     },
     {

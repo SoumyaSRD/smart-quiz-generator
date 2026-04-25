@@ -14,4 +14,7 @@ export const quizService = {
       },
     });
   },
+  explainQuestion: async (question: string, options: Record<string, string>, answer: string): Promise<{ explanation: string }> => {
+    return apiClient.post('/api/explain', { question, options, answer });
+  },
 };

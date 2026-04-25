@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Send, Clock, Layout, List, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useBlocker } from 'react-router-dom';
 import { ThemeOffcanvas } from '../components/ThemeOffcanvas';
 import { useQuizStore } from '../store/useQuizStore';
+import { useAuthStore } from '../store/useAuthStore';
 import WarningModal from '../components/WarningModal';
 
 const QuizPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [showWarning, setShowWarning] = useState(false);
+  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   
   // Use Zustand store for quiz state
   const { 
@@ -19,48 +21,54 @@ const QuizPage: React.FC = () => {
     timeRemaining, 
     setTimeRemaining, 
     submitQuiz,
-    resetQuiz
+    resetQuiz,
+    isSubmitted,
+    quizSessionId
   } = useQuizStore();
+  const { isAuthenticated, isDemoMode } = useAuthStore();
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [viewAll, setViewAll] = useState<boolean>(false);
 
-  // Handle Before Unload (Reload / Close Tab)
+  // ACCESS GUARD: Strict session-based entry
+  useEffect(() => {
+    if (!quizSessionId || isSubmitted || questions.length === 0) {
+      if (isAuthenticated || isDemoMode) {
+        navigate('/', { replace: true });
+      } else {
+        navigate('/login', { replace: true });
+      }
+    }
+  }, [quizSessionId, isSubmitted, questions.length, isAuthenticated, isDemoMode, navigate]);
+
+  // 1. Handle Navigation Blocking (Internal Links, Back Button, Sidebar)
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !isSubmitted && questions.length > 0 && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  // 2. Handle Before Unload (Reload / Close Tab)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = ''; // Standard way to show browser warning
+      if (!isSubmitted && questions.length > 0) {
+        e.preventDefault();
+        e.returnValue = ''; 
+      }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
-  // Handle Back Button (Popstate)
-  useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      // Prevent immediate navigation
-      window.history.pushState(null, '', window.location.pathname);
-      setShowWarning(true);
-    };
-
-    window.history.pushState(null, '', window.location.pathname);
-    window.addEventListener('popstate', handlePopState);
-    
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [isSubmitted, questions.length]);
 
   useEffect(() => {
-    if (questions.length === 0) {
-      navigate('/');
-      return;
-    }
+    if (questions.length === 0 || isSubmitted) return;
 
     const timer = setInterval(() => {
       setTimeRemaining((prev: number) => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleSubmit();
+          submitQuiz();
+          navigate('/result');
           return 0;
         }
         return prev - 1;
@@ -68,16 +76,27 @@ const QuizPage: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [questions, navigate, setTimeRemaining]);
+  }, [questions, isSubmitted, navigate, setTimeRemaining, submitQuiz]);
 
   const handleSubmit = () => {
+    setShowConfirmSubmit(true);
+  };
+
+  const confirmFinalSubmit = () => {
+    setShowConfirmSubmit(false);
     submitQuiz();
-    navigate('/result');
+    setTimeout(() => {
+      navigate('/result');
+    }, 0);
   };
 
   const handleForceExit = () => {
     resetQuiz();
-    navigate('/');
+    if (blocker.proceed) blocker.proceed();
+  };
+
+  const handleCancelExit = () => {
+    if (blocker.reset) blocker.reset();
   };
 
   const changeLanguage = (lng: string) => {
@@ -96,13 +115,27 @@ const QuizPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8">
+      {/* 1. Navigation Warning Modal (Triggers on back/exit) */}
       <WarningModal 
-        isOpen={showWarning}
-        onClose={() => setShowWarning(false)}
+        isOpen={blocker.state === "blocked"}
+        onClose={handleCancelExit}
         onConfirm={handleForceExit}
         title="Abandon Quiz?"
-        message="Your progress will be lost. Are you sure you want to exit the quiz?"
+        message="Your progress will be lost. Are you sure you want to exit the quiz environment?"
       />
+
+      {/* 2. Professional Submission Modal (Triggers on Submit click) */}
+      <WarningModal 
+        isOpen={showConfirmSubmit}
+        onClose={() => setShowConfirmSubmit(false)}
+        onConfirm={confirmFinalSubmit}
+        title="Finalize Session?"
+        message="You are about to submit your answers for evaluation. Ensure you have reviewed all questions before proceeding."
+        confirmText="Submit Anyway"
+        cancelText="Stay & Review"
+        type="warning"
+      />
+
       {/* Header Info */}
       <div className="flex flex-wrap justify-between items-center theme-card p-5 mb-8 sticky top-4 z-[50] shadow-xl">
         <div className="flex items-center gap-4">

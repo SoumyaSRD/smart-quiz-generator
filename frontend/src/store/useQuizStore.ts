@@ -27,6 +27,7 @@ interface QuizState {
   userAnswers: Record<number, string>;
   timeRemaining: number;
   isSubmitted: boolean;
+  quizSessionId: string | null;
   
   startQuiz: (quizData: { questions: Question[]; config: QuizConfig }) => void;
   selectAnswer: (questionIndex: number, option: string) => void;
@@ -44,6 +45,7 @@ export const useQuizStore = create<QuizState>()(
       userAnswers: {},
       timeRemaining: 0,
       isSubmitted: false,
+      quizSessionId: null,
 
       startQuiz: (quizData) => set({
         questions: quizData.questions,
@@ -51,6 +53,7 @@ export const useQuizStore = create<QuizState>()(
         userAnswers: {},
         timeRemaining: quizData.config.duration_minutes * 60,
         isSubmitted: false,
+        quizSessionId: `session_${Date.now()}`
       }),
 
       selectAnswer: (index, option) => set((state) => ({
@@ -61,14 +64,15 @@ export const useQuizStore = create<QuizState>()(
         timeRemaining: typeof time === 'function' ? time(state.timeRemaining) : time
       })),
 
-      submitQuiz: () => set({ isSubmitted: true }),
+      submitQuiz: () => set({ isSubmitted: true, quizSessionId: null }),
 
       resetQuiz: () => set({
         questions: [],
         config: null,
         userAnswers: {},
         timeRemaining: 0,
-        isSubmitted: false
+        isSubmitted: false,
+        quizSessionId: null
       }),
 
       calculateResults: () => {

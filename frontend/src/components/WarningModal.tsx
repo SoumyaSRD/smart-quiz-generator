@@ -7,9 +7,21 @@ interface WarningModalProps {
   onConfirm: () => void;
   title: string;
   message: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'danger' | 'warning';
 }
 
-const WarningModal: React.FC<WarningModalProps> = ({ isOpen, onClose, onConfirm, title, message }) => {
+const WarningModal: React.FC<WarningModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message,
+  confirmText = "Exit Quiz",
+  cancelText = "Stay & Finish",
+  type = 'danger'
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -23,7 +35,7 @@ const WarningModal: React.FC<WarningModalProps> = ({ isOpen, onClose, onConfirm,
       {/* Glassmorphism Modal */}
       <div className="relative w-full max-w-md bg-white/10 dark:bg-black/20 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-[2rem] p-8 shadow-2xl transform animate-in zoom-in-95 duration-300">
         <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-red-500/20 flex items-center justify-center mb-6 text-red-500 ring-8 ring-red-500/5">
+          <div className={`w-16 h-16 rounded-2xl ${type === 'danger' ? 'bg-red-500/20 text-red-500' : 'bg-orange-500/20 text-orange-500'} flex items-center justify-center mb-6 ring-8 ${type === 'danger' ? 'ring-red-500/5' : 'ring-orange-500/5'}`}>
             <AlertTriangle size={32} />
           </div>
           
@@ -38,17 +50,17 @@ const WarningModal: React.FC<WarningModalProps> = ({ isOpen, onClose, onConfirm,
           <div className="flex flex-col w-full gap-3">
             <button
               onClick={onConfirm}
-              className="w-full py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 group"
+              className={`w-full py-4 rounded-xl ${type === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'} text-white font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 group`}
             >
-              <LogOut size={16} className="group-hover:-translate-x-1 transition-transform" />
-              Exit Quiz
+              <LogOut size={16} className="group-hover:translate-x-1 transition-transform" />
+              {confirmText}
             </button>
             
             <button
               onClick={onClose}
               className="w-full py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 font-black uppercase tracking-widest text-xs transition-all border border-white/10"
             >
-              Stay & Finish
+              {cancelText}
             </button>
           </div>
         </div>

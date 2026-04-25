@@ -1,156 +1,57 @@
-import os
-from fastapi import FastAPI, UploadFile, File, Form
+import uvicorn
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import shutil
-import random
-import uuid
-from typing import List
-from pdf_parser import extract_questions_from_pdf, extract_questions_from_text
+from app.api.endpoints import auth, quiz
+from app.middlewares.logging_middleware import LoggingMiddleware
+from app.core.config import settings
 
-app = FastAPI()
-
-# Get allowed origins from environment variable or default to localhost
-# In production, set ALLOWED_ORIGINS to your GitHub Pages URL
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-UPLOAD_DIR = "/tmp/temp_uploads" if os.getenv("RENDER") else "temp_uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-CATEGORIES = [
-    "English", "Aptitude", "Reasoning", "Odia", 
-    "Current Affairs", "Computer", "General Knowledge", "Mixed"
-]
-
-@app.get("/")
-async def root():
-    return {"message": "Quiz Generator API is running"}
-
-@app.post("/api/upload-and-generate")
-async def upload_and_generate(
-    files_English: List[UploadFile] = File(None),
-    files_Aptitude: List[UploadFile] = File(None),
-    files_Reasoning: List[UploadFile] = File(None),
-    files_Odia: List[UploadFile] = File(None),
-    files_CurrentAffairs: List[UploadFile] = File(None),
-    files_Computer: List[UploadFile] = File(None),
-    files_GeneralKnowledge: List[UploadFile] = File(None),
-    files_Mixed: List[UploadFile] = File(None),
-    text_English: str = Form(""),
-    text_Aptitude: str = Form(""),
-    text_Reasoning: str = Form(""),
-    text_Odia: str = Form(""),
-    text_CurrentAffairs: str = Form(""),
-    text_Computer: str = Form(""),
-    text_GeneralKnowledge: str = Form(""),
-    text_Mixed: str = Form(""),
-    config_English: int = Form(0),
-    config_Aptitude: int = Form(0),
-    config_Reasoning: int = Form(0),
-    config_Odia: int = Form(0),
-    config_CurrentAffairs: int = Form(0),
-    config_Computer: int = Form(0),
-    config_GeneralKnowledge: int = Form(0),
-    config_Mixed: int = Form(0),
-    total_questions: int = Form(10),
-    marks_per_question: float = Form(1.0),
-    negative_marks: float = Form(0.0),
-    duration_minutes: int = Form(10)
-):
-    all_selected_questions = []
+def create_application() -> FastAPI:
+    """
+    Factory function to initialize the FastAPI application.
+    Enables cleaner unit testing and enterprise modularity.
+    """
     
-    file_mapping = {
-        "English": files_English,
-        "Aptitude": files_Aptitude,
-        "Reasoning": files_Reasoning,
-        "Odia": files_Odia,
-        "Current Affairs": files_CurrentAffairs,
-        "Computer": files_Computer,
-        "General Knowledge": files_GeneralKnowledge,
-        "Mixed": files_Mixed,
-    }
-    
-    text_mapping = {
-        "English": text_English,
-        "Aptitude": text_Aptitude,
-        "Reasoning": text_Reasoning,
-        "Odia": text_Odia,
-        "Current Affairs": text_CurrentAffairs,
-        "Computer": text_Computer,
-        "General Knowledge": text_GeneralKnowledge,
-        "Mixed": text_Mixed,
-    }
-    
-    config_mapping = {
-        "English": config_English,
-        "Aptitude": config_Aptitude,
-        "Reasoning": config_Reasoning,
-        "Odia": config_Odia,
-        "Current Affairs": config_CurrentAffairs,
-        "Computer": config_Computer,
-        "General Knowledge": config_GeneralKnowledge,
-        "Mixed": config_Mixed,
-    }
-    
-    session_id = str(uuid.uuid4())
-    session_dir = os.path.join(UPLOAD_DIR, session_id)
-    os.makedirs(session_dir, exist_ok=True)
-    
-    try:
-        for category in CATEGORIES:
-            category_questions = []
-            
-            # 1. Extract from PDFs
-            files = file_mapping.get(category)
-            if files:
-                for file in files:
-                    file_path = os.path.join(session_dir, file.filename)
-                    with open(file_path, "wb") as buffer:
-                        shutil.copyfileobj(file.file, buffer)
-                    
-                    extracted = extract_questions_from_pdf(file_path)
-                    category_questions.extend(extracted)
-            
-            # 2. Extract from pasted text
-            pasted_text = text_mapping.get(category, "")
-            if pasted_text:
-                extracted_text = extract_questions_from_text(pasted_text)
-                category_questions.extend(extracted_text)
-                
-            # Pick requested number from this category
-            num_to_pick = config_mapping.get(category, 0)
-            if category_questions and num_to_pick > 0:
-                selected = random.sample(
-                    category_questions, 
-                    min(len(category_questions), num_to_pick)
-                )
-                for q in selected:
-                    q["category"] = category
-                all_selected_questions.extend(selected)
+    # 1. Initialize FastAPI with metadata
+    application = FastAPI(
+        title="BrainWave Quiz Engine",
+        description="Enterprise-level AI Quiz Generation Platform",
+        version="2.0.0"
+    )
 
-        random.shuffle(all_selected_questions)
-        final_questions = all_selected_questions[:total_questions]
-        
-        return {
-            "questions": final_questions,
-            "config": {
-                "total_questions": total_questions,
-                "marks_per_question": marks_per_question,
-                "negative_marks": negative_marks,
-                "duration_minutes": duration_minutes
-            }
-        }
-    finally:
-        shutil.rmtree(session_dir, ignore_errors=True)
+    # 2. Configure CORS Interceptor (Middleware)
+    # Allows the frontend to communicate with the backend safely.
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # 3. Register Custom Logging Interceptor (Middleware)
+    # Tracks request timing and status codes globally.
+    application.add_middleware(LoggingMiddleware)
+
+    # 4. Include Subject-specific Routers
+    # - Authentication & User Management (Standardized under /api)
+    application.include_router(auth.router, prefix="/api", tags=["Authentication"])
+    
+    # - Quiz Engineering & Generation (Standardized under /api)
+    application.include_router(quiz.router, prefix="/api", tags=["Quiz Engine"])
+
+    @application.get("/", tags=["Health"])
+    async def root():
+        """Public health check endpoint"""
+        return {"status": "Active", "system": "BrainWave Core", "version": "2.0.0"}
+
+    return application
+
+# Final app instance
+app = create_application()
 
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # Start the server using Uvicorn
+    # Line explanation:
+    # 1. host 0.0.0.0: Bind to all interfaces (required for Docker/Cloud).
+    # 2. port 8000: Standard API port.
+    uvicorn.run(app, host="0.0.0.0", port=8000)

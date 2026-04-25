@@ -21,9 +21,10 @@ class HttpClient {
     // Request Interceptor
     this.instance.interceptors.request.use(
       (config) => {
-        // You can add auth tokens here if needed
-        // const token = localStorage.getItem('token');
-        // if (token) config.headers.Authorization = `Bearer ${token}`;
+        const token = (JSON.parse(localStorage.getItem('auth-storage') || '{}')).state?.token;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
         return config;
       },
       (error) => Promise.reject(error)
@@ -33,7 +34,11 @@ class HttpClient {
     this.instance.interceptors.response.use(
       (response: AxiosResponse) => response,
       (error) => {
-        // Handle global errors here
+        if (error.response?.status === 401) {
+          // Force logout on token expiry
+          localStorage.removeItem('auth-storage');
+          window.location.href = '/login';
+        }
         const message = error.response?.data?.detail || error.message || 'Something went wrong';
         console.error('[API Error]:', message);
         return Promise.reject(error);
