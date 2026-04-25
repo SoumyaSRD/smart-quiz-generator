@@ -1,27 +1,29 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QuizProvider } from './context/QuizContext';
+import { ThemeProvider } from './context/ThemeContext';
 import SetupPage from './pages/SetupPage';
 import QuizPage from './pages/QuizPage';
 import ResultPage from './pages/ResultPage';
 
 const App: React.FC = () => {
-  // Use Vite's built-in BASE_URL which respects the 'base' config in vite.config.ts
-  // We remove the trailing slash as react-router-dom prefers it that way for basename
   const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
   
   return (
-    <QuizProvider>
-      <Router basename={basename}>
-        <div className="min-h-screen bg-gray-50 text-gray-900">
-          <Routes>
-            <Route path="/" element={<SetupPage />} />
-            <Route path="/quiz" element={<QuizPage />} />
-            <Route path="/result" element={<ResultPage />} />
-          </Routes>
-        </div>
-      </Router>
-    </QuizProvider>
+    <ThemeProvider>
+      <QuizProvider>
+        <Router basename={basename}>
+          {/* Main container with standard dark mode utilities */}
+          <div className="min-h-screen">
+            <Routes>
+              <Route path="/" element={<SetupPage />} />
+              <Route path="/quiz" element={<QuizPage />} />
+              <Route path="/result" element={<ResultPage />} />
+            </Routes>
+          </div>
+        </Router>
+      </QuizProvider>
+    </ThemeProvider>
   );
 }
 

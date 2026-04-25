@@ -2,20 +2,148 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@layer base {
+  :root {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --border: #e2e8f0;
+    --input-bg: #ffffff;
+  }
+
+  [data-theme='dark'] {
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --border: #334155;
+    --input-bg: #1e293b;
+  }
+
+  [data-theme='solo-leveling'] {
+    --bg-main: #020617;
+    --bg-card: #0f172a;
+    --text-main: #f1f5f9;
+    --text-muted: #64748b;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --border: #1e293b;
+    --input-bg: #0f172a;
+  }
+
+  [data-theme='one-piece'] {
+    --bg-main: #fff7ed;
+    --bg-card: #ffffff;
+    --text-main: #7c2d12;
+    --text-muted: #9a3412;
+    --accent: #ef4444; /* Straw Hat Red */
+    --accent-hover: #dc2626;
+    --border: #fed7aa;
+    --input-bg: #fffcf2;
+    background-image: url("https://www.transparenttextures.com/patterns/paper.png");
+  }
+
+  [data-theme='batman'] {
+    --bg-main: #000000;
+    --bg-card: #111111;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #facc15; /* Bat Yellow */
+    --accent-hover: #eab308;
+    --border: #333333;
+    --input-bg: #000000;
+  }
+
+  [data-theme='nature-sea'] {
+    --bg-main: #f0fdfa;
+    --bg-card: #ffffff;
+    --text-main: #134e4a;
+    --text-muted: #0d9488;
+    --accent: #0ea5e9;
+    --accent-hover: #0284c7;
+    --border: #ccfbf1;
+    --input-bg: #f8fafc;
+  }
+
+  [data-theme='nature-hill'] {
+    --bg-main: #f7fee7;
+    --bg-card: #ffffff;
+    --text-main: #365314;
+    --text-muted: #4d7c0f;
+    --accent: #65a30d;
+    --accent-hover: #4d7c0f;
+    --border: #ecfccb;
+    --input-bg: #fdfdfd;
+  }
+
+  [data-theme='nature-mountain'] {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #334155;
+    --text-muted: #64748b;
+    --accent: #475569;
+    --accent-hover: #1e293b;
+    --border: #e2e8f0;
+    --input-bg: #ffffff;
+  }
+
+  [data-theme='nature-river'] {
+    --bg-main: #eff6ff;
+    --bg-card: #ffffff;
+    --text-main: #1e3a8a;
+    --text-muted: #3b82f6;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --border: #dbeafe;
+    --input-bg: #f8fafc;
+  }
+
+  [data-theme='nature-waterfall'] {
+    --bg-main: #f0f9ff;
+    --bg-card: #ffffff;
+    --text-main: #0c4a6e;
+    --text-muted: #0284c7;
+    --accent: #0ea5e9;
+    --accent-hover: #0284c7;
+    --border: #e0f2fe;
+    --input-bg: #ffffff;
+  }
+
+  body {
+    @apply bg-main text-main transition-colors duration-300 min-h-screen;
+    font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+  }
+
+  select option {
+    @apply bg-card text-main;
+  }
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-content: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+@layer components {
+  .theme-card {
+    @apply bg-card border border-theme rounded-2xl shadow-sm transition-all duration-300;
+  }
 
-#root {
-  width: 100%;
+  .theme-input {
+    @apply bg-input border border-theme text-main rounded-xl px-4 py-2 focus:ring-2 focus:ring-accent outline-none transition-all duration-200;
+  }
+
+  .theme-button-primary {
+    @apply bg-accent hover:opacity-90 text-white font-bold rounded-xl px-6 py-3 transition-all duration-200 active:scale-95 disabled:opacity-50;
+  }
+
+  /* Specific fix for One Piece theme buttons which might need contrast */
+  [data-theme='one-piece'] .theme-button-primary {
+    @apply text-white shadow-md shadow-red-200;
+  }
+  
+  [data-theme='batman'] .theme-button-primary {
+    @apply text-black shadow-md shadow-yellow-900/20;
+  }
 }

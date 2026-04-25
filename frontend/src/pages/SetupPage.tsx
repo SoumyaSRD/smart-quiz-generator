@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
 import axios from 'axios';
+import { FileText, Globe, Play, Upload, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { ThemeOffcanvas } from '../components/ThemeOffcanvas';
 import { useQuiz } from '../context/QuizContext';
-import { Upload, Settings, Play, FileText, X } from 'lucide-react';
 
 const CATEGORIES = [
-  "English", "Aptitude", "Reasoning", "Odia", 
+  "English", "Aptitude", "Reasoning", "Odia",
   "Current Affairs", "Computer", "General Knowledge"
 ];
 
 const SetupPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { startQuiz } = useQuiz();
   const [loading, setLoading] = useState<boolean>(false);
@@ -22,7 +25,7 @@ const SetupPage: React.FC = () => {
   const [categoryConfigs, setCategoryConfigs] = useState<Record<string, number>>(
     [...CATEGORIES, "Mixed"].reduce((acc, cat) => ({ ...acc, [cat]: 0 }), {})
   );
-  
+
   const [generalConfig, setGeneralConfig] = useState({
     total_questions: 10,
     marks_per_question: 1,
@@ -50,6 +53,10 @@ const SetupPage: React.FC = () => {
     setTempText("");
   };
 
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
+
   const handleCategoryConfigChange = (category: string, value: string) => {
     setCategoryConfigs(prev => ({ ...prev, [category]: parseInt(value) || 0 }));
   };
@@ -63,27 +70,27 @@ const SetupPage: React.FC = () => {
     setLoading(true);
 
     const formData = new FormData();
-    
-    // Add files
     Object.entries(files).forEach(([category, fileList]) => {
       fileList.forEach(file => {
         formData.append(`files_${category.replace(' ', '')}`, file);
       });
     });
-
-    // Add texts
     Object.entries(texts).forEach(([category, text]) => {
       if (text) {
-        formData.append(`text_${category.replace(' ', '')}`, text);
+        console.log("text", text)
+        console.log("__________________________________")
+
+
+        const modifiedText = addQuestionNumberingSafe(text)
+
+        console.log("modifiedText", modifiedText)
+
+        formData.append(`text_${category.replace(' ', '')}`, modifiedText);
       }
     });
-
-    // Add category configs
     Object.entries(categoryConfigs).forEach(([category, value]) => {
       formData.append(`config_${category.replace(' ', '')}`, value.toString());
     });
-
-    // Add general config
     Object.entries(generalConfig).forEach(([name, value]) => {
       formData.append(name, value.toString());
     });
@@ -93,7 +100,7 @@ const SetupPage: React.FC = () => {
       const response = await axios.post(`${apiUrl}/api/upload-and-generate`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
+
       if (response.data.questions.length === 0) {
         alert("No questions could be extracted. Please check your PDF/Text format.");
       } else {
@@ -108,185 +115,238 @@ const SetupPage: React.FC = () => {
     }
   };
 
+  const addQuestionNumberingSafe = (input: string): string => {
+    const parts = input.split(/(?=Answer:)/g);
+
+    let result: string[] = [];
+    let questionNumber = 1;
+
+    for (let i = 0; i < parts.length; i++) {
+      let block = parts[i].trim();
+
+      // Merge question + answer
+      if (i < parts.length - 1) {
+        block = block + "\n" + parts[i + 1].trim();
+        i++;
+      }
+
+      const lines = block.split("\n");
+
+      if (lines.length > 0) {
+        const firstLine = lines[0].trim();
+
+        // ✅ Check if already numbered (e.g., "1. Question...")
+        const alreadyNumbered = /^\d+\.\s/.test(firstLine);
+
+        if (!alreadyNumbered) {
+          lines[0] = `${questionNumber}. ${firstLine}`;
+        }
+
+        // Only increment if we actually used a number or it's already numbered
+        questionNumber++;
+      }
+
+      result.push(lines.join("\n"));
+    }
+
+    return result.join("\n\n");
+  }
+
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
-      <h1 className="text-3xl font-bold text-blue-600 mb-8 flex items-center gap-2">
-        <Upload /> Quiz Generator Setup
-      </h1>
+    <div className="py-10 px-4 min-h-screen transition-colors duration-300">
+      <div className="max-w-4xl mx-auto p-8 theme-card">
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-3xl font-black text-accent flex items-center gap-3">
+            <div className="p-3 bg-accent text-white rounded-2xl">
+              <Upload size={28} />
+            </div>
+            {t('title')}
+          </h1>
 
-      <div className="mb-8 p-6 bg-gray-50 border rounded-xl flex flex-col md:flex-row md:items-center gap-6 shadow-sm">
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Quiz Upload Mode</label>
-          <select 
-            value={quizMode}
-            onChange={(e) => setQuizMode(e.target.value)}
-            className="p-3 border-2 border-blue-100 rounded-lg bg-white w-full md:w-80 font-medium text-gray-700 focus:border-blue-500 focus:ring-0 transition-all cursor-pointer"
-          >
-            <option value="multiple">Subject Wise (English, Aptitude, etc.)</option>
-            <option value="mixed">All-in-One (Mixed/Global)</option>
-          </select>
-        </div>
-        <div className="flex-grow">
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {quizMode === "multiple" 
-              ? "Best for segmented quizzes. Upload separate PDFs for different subjects to maintain a balanced ratio." 
-              : "Best for quick quizzes. Use a single source for all questions (Mixed PDF or Text Paste)."}
-          </p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* File Upload Sections */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700">Content Sources</h2>
-            {displayCategories.map(category => (
-              <div key={category} className="p-4 border rounded-md bg-gray-50 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-gray-700">{category}</label>
-                  {texts[category] && (
-                    <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Text Added</span>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <input 
-                      type="file" 
-                      multiple 
-                      accept=".pdf"
-                      onChange={(e) => handleFileChange(category, e)}
-                      className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 flex-grow"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => openTextModal(category)}
-                      className={`p-2 rounded-md transition-colors ${texts[category] ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
-                      title="Paste Text Content"
-                    >
-                      <FileText size={16} />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 whitespace-nowrap">Questions to pick:</span>
-                    <input 
-                      type="number"
-                      placeholder="Count"
-                      value={categoryConfigs[category]}
-                      onChange={(e) => handleCategoryConfigChange(category, e.target.value)}
-                      className="w-full p-1.5 border rounded-md text-sm"
-                      min="0"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center gap-4">
+            <ThemeOffcanvas />
+            <div className="flex items-center gap-2 bg-main border border-theme p-1.5 rounded-xl">
+              <Globe size={18} className="text-muted ml-2" />
+              <select
+                onChange={(e) => changeLanguage(e.target.value)}
+                value={i18n.language}
+                className="bg-transparent text-sm font-bold text-main focus:outline-none p-1 cursor-pointer"
+              >
+                <option value="en">English</option>
+                <option value="hi">हिंदी</option>
+                <option value="or">ଓଡ଼ିଆ</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
           </div>
+        </div>
 
-          {/* Configuration Section */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
-              <Settings className="w-5 h-5" /> Quiz Parameters
-            </h2>
-            <div className="p-6 border rounded-md bg-blue-50 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Total Quiz Questions</label>
-                <input 
-                  type="number"
-                  value={generalConfig.total_questions}
-                  onChange={(e) => handleGeneralConfigChange('total_questions', e.target.value)}
-                  className="w-full p-2 border rounded-md mt-1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Marks per Question</label>
-                <input 
-                  type="number"
-                  step="0.1"
-                  value={generalConfig.marks_per_question}
-                  onChange={(e) => handleGeneralConfigChange('marks_per_question', e.target.value)}
-                  className="w-full p-2 border rounded-md mt-1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Negative Marks (e.g., 0.25)</label>
-                <input 
-                  type="number"
-                  step="0.1"
-                  value={generalConfig.negative_marks}
-                  onChange={(e) => handleGeneralConfigChange('negative_marks', e.target.value)}
-                  className="w-full p-2 border rounded-md mt-1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Time Limit (Minutes)</label>
-                <input 
-                  type="number"
-                  value={generalConfig.duration_minutes}
-                  onChange={(e) => handleGeneralConfigChange('duration_minutes', e.target.value)}
-                  className="w-full p-2 border rounded-md mt-1"
-                />
+        <div className="mb-10 p-6 bg-main border border-theme rounded-2xl flex flex-col md:flex-row md:items-center gap-6">
+          <div className="flex-shrink-0">
+            <label className="block text-xs font-black text-muted mb-2 uppercase tracking-widest">{t('quiz_upload_mode')}</label>
+            <select
+              value={quizMode}
+              onChange={(e) => setQuizMode(e.target.value)}
+              className="theme-input min-w-[280px] font-bold"
+            >
+              <option value="multiple">{t('subject_wise')}</option>
+              <option value="mixed">{t('all_in_one')}</option>
+            </select>
+          </div>
+          <div className="flex-grow">
+            <p className="text-muted text-sm font-medium leading-relaxed">
+              {quizMode === "multiple" ? t('subject_wise_desc') : t('all_in_one_desc')}
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="space-y-6">
+              <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                <div className="w-2 h-6 bg-accent rounded-full" /> {t('content_sources')}
+              </h2>
+              <div className="space-y-4">
+                {displayCategories.map(category => (
+                  <div key={category} className="p-6 border border-theme rounded-2xl bg-main/30 hover:border-accent/50 transition-all">
+                    <div className="flex justify-between items-center mb-4">
+                      <label className="block text-sm font-extrabold tracking-wide uppercase">
+                        {t(`categories.${category}`, { defaultValue: category })}
+                      </label>
+                      {texts[category] && (
+                        <span className="text-[10px] bg-green-500/20 text-green-500 px-2.5 py-1 rounded-full font-black uppercase">{t('text_added')}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex gap-2">
+                        <div className="relative flex-grow">
+                          <input
+                            type="file"
+                            multiple
+                            accept=".pdf"
+                            onChange={(e) => handleFileChange(category, e)}
+                            className="theme-input w-full text-xs py-2.5 file:hidden cursor-pointer"
+                          />
+                          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <Upload size={14} />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openTextModal(category)}
+                          className={`p-3 rounded-xl transition-all shadow-sm border border-theme ${texts[category] ? 'bg-green-600 text-white' : 'bg-card text-main hover:bg-main'}`}
+                        >
+                          <FileText size={20} />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-black text-muted uppercase flex-shrink-0">{t('pick_questions')}</span>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={categoryConfigs[category]}
+                          onChange={(e) => handleCategoryConfigChange(category, e.target.value)}
+                          className="theme-input w-full font-black text-center"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-            
-            <button 
-              type="submit" 
-              disabled={loading}
-              className={`w-full py-4 rounded-lg text-white font-bold text-lg shadow-lg flex items-center justify-center gap-2 ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:transform active:scale-95 transition-all'}`}
-            >
-              {loading ? "Processing Content..." : <><Play /> Generate & Start Quiz</>}
-            </button>
-          </div>
-        </div>
-      </form>
 
-      {/* Text Paste Modal */}
-      {activeModalCategory && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b flex justify-between items-center bg-blue-600 text-white">
-              <h3 className="font-bold flex items-center gap-2">
-                <FileText size={20} /> Paste Text Content: {activeModalCategory}
-              </h3>
-              <button onClick={() => setActiveModalCategory(null)} className="hover:bg-blue-700 p-2 rounded-full transition-colors">
-                <X size={20} />
+            <div className="space-y-6">
+              <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                <div className="w-2 h-6 bg-accent rounded-full" /> {t('quiz_parameters')}
+              </h2>
+              <div className="p-8 border-2 border-theme rounded-3xl bg-main/20 space-y-6 shadow-inner">
+                {[
+                  { label: t('total_questions'), key: 'total_questions', type: 'number' },
+                  { label: t('marks_per_question'), key: 'marks_per_question', type: 'number', step: '0.1' },
+                  { label: t('negative_marks'), key: 'negative_marks', type: 'number', step: '0.1' },
+                  { label: t('time_limit'), key: 'duration_minutes', type: 'number' }
+                ].map((input) => (
+                  <div key={input.key}>
+                    <label className="block text-xs font-black text-muted uppercase tracking-widest mb-2">{input.label}</label>
+                    <input
+                      type={input.type}
+                      step={input.step}
+                      value={(generalConfig as any)[input.key]}
+                      onChange={(e) => handleGeneralConfigChange(input.key, e.target.value)}
+                      className="theme-input w-full font-black text-lg py-3"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="theme-button-primary w-full py-5 text-xl shadow-xl flex items-center justify-center gap-3"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2 font-bold uppercase tracking-widest">
+                    <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                    {t('processing')}
+                  </div>
+                ) : (
+                  <><Play size={24} className="fill-current" /> {t('generate_btn')}</>
+                )}
               </button>
             </div>
-            <div className="p-6">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6">
-                <p className="text-xs font-bold text-blue-800 mb-2 uppercase tracking-wide">Standard Format Required:</p>
-                <code className="text-[11px] text-blue-700 font-mono block whitespace-pre">
-                  1. Question Text?{"\n"}
-                  A) Option 1{"\n"}
-                  B) Option 2{"\n"}
-                  C) Option 3{"\n"}
-                  D) Option 4{"\n"}
-                  Answer: A
-                </code>
+          </div>
+        </form>
+
+        {activeModalCategory && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[1000] p-4 backdrop-blur-md">
+            <div className="bg-card rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-theme">
+              <div className="p-6 border-b border-theme flex justify-between items-center bg-accent text-white">
+                <h3 className="font-black text-xl flex items-center gap-3 tracking-tight uppercase">
+                  <FileText size={24} /> {t('paste_text_title', { category: t(`categories.${activeModalCategory}`, { defaultValue: activeModalCategory }) })}
+                </h3>
+                <button onClick={() => setActiveModalCategory(null)} className="hover:bg-black/10 p-2 rounded-full transition-colors">
+                  <X size={24} />
+                </button>
               </div>
-              <textarea
-                value={tempText}
-                onChange={(e) => setTempText(e.target.value)}
-                placeholder="Paste your questions here..."
-                className="w-full h-80 p-4 border-2 rounded-xl focus:border-blue-500 focus:outline-none font-mono text-sm shadow-inner"
-              />
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => setActiveModalCategory(null)}
-                  className="px-6 py-2.5 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveText}
-                  className="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md active:scale-95 transition-all"
-                >
-                  Save Questions
-                </button>
+              <div className="p-8">
+                <div className="bg-main p-5 rounded-2xl border border-theme mb-6 shadow-inner">
+                  <p className="text-xs font-black text-muted mb-3 uppercase tracking-widest">{t('format_required')}</p>
+                  <code className="text-[11px] text-accent font-mono block whitespace-pre leading-relaxed font-bold">
+                    1. Question Text?{"\n"}
+                    A) Option 1{"\n"}
+                    B) Option 2{"\n"}
+                    C) Option 3{"\n"}
+                    D) Option 4{"\n"}
+                    Answer: A
+                  </code>
+                </div>
+                <textarea
+                  value={tempText}
+                  onChange={(e) => setTempText(e.target.value)}
+                  placeholder={t('placeholder_text')}
+                  className="theme-input w-full h-80 p-5 font-mono text-sm leading-relaxed"
+                />
+                <div className="mt-8 flex justify-end gap-4">
+                  <button
+                    onClick={() => setActiveModalCategory(null)}
+                    className="px-8 py-3 text-muted font-black uppercase tracking-widest hover:bg-main rounded-2xl transition-colors"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    onClick={saveText}
+                    className="theme-button-primary px-10 py-3 uppercase tracking-widest"
+                  >
+                    {t('save_questions')}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
