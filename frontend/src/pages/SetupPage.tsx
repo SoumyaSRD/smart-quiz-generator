@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Settings, Play, FileText, X, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ThemeOffcanvas } from '../components/ThemeOffcanvas';
 import { useQuizStore } from '../store/useQuizStore';
 import { formatMcqText } from '../utils/textFormatter';
+import { quizService } from '../services/quizService';
 
 const CATEGORIES = [
   "English", "Aptitude", "Reasoning", "Odia", 
@@ -98,13 +98,12 @@ const SetupPage: React.FC = () => {
     });
 
     try {
-      const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000';
-      const response = await axios.post(`${apiUrl}/api/upload-and-generate`, formData);
+      const data = await quizService.generateQuiz(formData);
       
-      if (response.data.questions.length === 0) {
+      if (data.questions.length === 0) {
         alert("No questions could be extracted.");
       } else {
-        startQuiz(response.data);
+        startQuiz(data);
         navigate('/quiz');
       }
     } catch (error) {
@@ -114,6 +113,7 @@ const SetupPage: React.FC = () => {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="py-10 px-4">
