@@ -3,6 +3,10 @@ import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.warn('WARNING: VITE_API_URL is not defined. API calls will default to the current origin, which may fail if the backend is hosted elsewhere.');
+}
+
 class HttpClient {
   private instance: AxiosInstance;
 
@@ -51,12 +55,12 @@ class HttpClient {
     return response.data;
   }
 
-  public async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.post<T>(url, data, config);
     return response.data;
   }
 
-  public async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.put<T>(url, data, config);
     return response.data;
   }
