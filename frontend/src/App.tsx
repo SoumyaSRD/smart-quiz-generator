@@ -10,9 +10,6 @@ import AuthGuard from './components/AuthGuard';
 import MainLayout from './components/MainLayout';
 
 const App: React.FC = () => {
-  // Use basename from environment (Standard for Vite/GitHub Pages)
-  const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
-
   const router = createHashRouter([
     {
       path: "/login",
@@ -42,9 +39,7 @@ const App: React.FC = () => {
       path: "*",
       element: <Navigate to="/" replace />,
     }
-  ], {
-    basename: basename
-  });
+  ]);
 
   return (
     <div className="min-h-screen transition-colors duration-300">
