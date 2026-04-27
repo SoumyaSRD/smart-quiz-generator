@@ -1,46 +1,46 @@
-# 🧠 Enterprise Quiz Generator Pro
+# 🧠 BrainWave: Enterprise Quiz Generator Pro
 
-A professional, high-performance Full-Stack MCQ Generator system built with **React (TypeScript)**, **Zustand**, **Sass**, and **FastAPI**.
+A professional, high-performance Full-Stack MCQ Generator system built with **React 19**, **FastAPI**, and **TypeScript**. Generate intelligent quizzes from PDFs or raw text with advanced AI-simulated explanations.
+
+---
 
 ## 🚀 Key Features
 
-- **Multi-Source Input**: Upload multiple PDF files or paste raw text categorized into 7+ subjects.
-- **Enterprise Architecture**: 
-  - **State Management**: Powered by **Zustand** with persistent storage middleware.
-  - **Theming System**: Robust CSS-Variable driven architecture with **Sass** mixins.
-  - **Type Safety**: 100% **TypeScript** coverage for frontend components and stores.
-- **Dynamic Themes**: Switch between 10+ premium themes (Light, Dark, Solo Leveling, Batman, One Piece, and Nature Collection).
-- **Intelligent Parser**: Robust Regex and State-Machine parsing to handle messy PDF extractions and unnumbered text blocks.
-- **Auto-Formatter**: Built-in text utility to normalize spacing and handle "Answer: X" lines automatically.
-- **Multi-Lingual**: Full i18n support for English, Hindi, Odia, French, and Spanish.
+- **Multi-Source Ingestion**: Categorize inputs into English, Aptitude, Reasoning, Odia, General Knowledge, and more.
+- **Intelligent Parsing**: Robust State-Machine parser handles messy PDF text, missing numbers, and inconsistent formatting.
+- **Dynamic Theming**: 10+ premium themes including **Solo Leveling**, **The Batman**, and **One Piece**.
+- **Result Analytics**: Instant evaluation with downloadable PDF Answer Keys and Performance Reports.
+- **Enterprise Ready**: Fully Dockerized, Type-safe, and supports Internationalization (i18n).
 
 ---
 
 ## 🛠️ Technical Stack
 
-### Frontend
-- **Framework**: React 18 (Vite)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS + Sass (SCSS)
-- **State**: Zustand (Middleware: Persist)
-- **Internationalization**: react-i18next
-- **Icons**: Lucide React
-
-### Backend
-- **Framework**: FastAPI (Python 3.11+)
-- **Parser**: pdfplumber + Advanced Regex
-- **Deployment**: Dockerized (Dev/Prod stages)
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 19, Vite, TypeScript, Zustand, Tailwind CSS, Sass |
+| **Backend** | FastAPI (Python 3.11), pdfplumber, Pydantic |
+| **DevOps** | Docker, Nginx, GitHub Actions (CI/CD) |
+| **Utilities** | jsPDF, i18next, Lucide Icons |
 
 ---
 
-## 🏗️ Getting Started
+## 🏗️ Local Development Setup
+
+### Prerequisites
+- **Node.js**: v22 or higher
+- **Python**: v3.11 or higher
+- **Docker**: Optional (for containerized setup)
 
 ### 1. Backend Setup
 ```bash
 cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python main.py
 ```
+*The backend will run on `http://localhost:8000`*
 
 ### 2. Frontend Setup
 ```bash
@@ -48,16 +48,47 @@ cd frontend
 npm install
 npm run dev
 ```
+*The frontend will run on `http://localhost:5173`*
 
-### 3. Docker (Recommended)
+### 3. Using Docker (Recommended)
 ```bash
+# Runs both services with live-reload (Development)
 docker compose up --build
 ```
 
 ---
 
+## 🌐 Deployment Guide (Production)
+
+### Backend (Render / Heroku)
+1. **Root Directory**: `backend`
+2. **Build Command**: `pip install -r requirements.txt`
+3. **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. **Env Vars**:
+   - `ALLOWED_ORIGINS`: `https://your-frontend.github.io`
+   - `SECRET_KEY`: (Your secret string for JWT)
+
+### Frontend (GitHub Pages)
+1. Set up GitHub Secret `VITE_API_URL` pointing to your Render backend.
+2. The provided GitHub Action (`.github/workflows/deploy-frontend.yml`) will build and deploy to the `gh-pages` branch.
+3. In Repo Settings > Pages, select `gh-pages` as the source branch.
+
+---
+
+## ⚙️ Configuration (Environment Variables)
+
+### Backend (`backend/.env`)
+- `PORT`: Default `8000`
+- `ALLOWED_ORIGINS`: Comma-separated list of allowed URLs for CORS.
+- `SECRET_KEY`: Used for JWT authentication.
+
+### Frontend (`frontend/.env`)
+- `VITE_API_URL`: Full URL of the backend API (e.g., `https://api.yourdomain.com`).
+
+---
+
 ## 📝 MCQ Standard Format
-The system performs best with this structure:
+For best results, use the following structure:
 ```text
 1. What is the capital of France?
 A) London
@@ -66,40 +97,25 @@ C) Paris
 D) Madrid
 Answer: C
 ```
-*Note: The auto-formatter will handle missing numbers and inconsistent spacing automatically.*
+*Note: The system automatically normalizes spacing and removes leading numbers.*
 
 ---
 
-## 🍱 Themes Available
-- **Core**: Light, Dark
-- **Anime**: Solo Leveling (Shadow Monarch), One Piece (Grand Line)
-- **Nature**: Deep Sea, Green Hills, Cold Mountain, Blue River, Waterfall
-- **Special**: The Batman (High Contrast Black/Yellow)
+## 🛠️ Troubleshooting & Recent Fixes
+
+- **Bcrypt Compatibility**: Fixed `ValueError` in production by pinning `bcrypt==4.0.1`.
+- **Deployment Connectivity**: Updated `apiClient` to prevent falling back to `localhost` in production environments.
+- **Dynamic Routing**: Added automatic base-path detection for GitHub Pages vs. Custom Domains.
+- **Port Binding**: Added dynamic `$PORT` binding for compatibility with Render/Heroku environments.
 
 ---
 
-## 🌐 Deployment Guide (GitHub Pages + Render)
-
-### 1. Backend (Render)
-1. Create a new **Web Service** on Render.
-2. Connect your repository.
-3. Set **Root Directory** to `backend`.
-4. Set **Environment Variables**:
-   - `PORT`: `8000` (Render handles this, but you can specify).
-   - `ALLOWED_ORIGINS`: `https://your-username.github.io` (Replace with your GitHub Pages URL).
-   - `SECRET_KEY`: A long random string for JWT security.
-
-### 2. Frontend (GitHub Pages)
-1. Go to your GitHub Repository **Settings** > **Secrets and variables** > **Actions**.
-2. Add a **New repository secret**:
-   - **Name**: `VITE_API_URL`
-   - **Value**: `https://your-backend-app.onrender.com` (Your Render backend URL).
-3. The GitHub Action will automatically build and deploy the frontend to the `gh-pages` branch.
-4. Ensure **Settings** > **Pages** is set to deploy from the `gh-pages` branch.
-
----
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/NewTheme`)
-3. Commit changes (`git commit -m 'Add New Theme'`)
-4. Push to the branch (`git push origin feature/NewTheme`)
+## 🤝 Contributing
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+---
+*Developed with 🧠 by the BrainWave Engineering Team.*
