@@ -4,5 +4,6 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: "/smart-quiz-generator",
+  // Use '/' by default for Render/Vercel, and '/smart-quiz-generator' only for GitHub Pages
+  base: process.env.NODE_ENV === 'production' && !process.env.RENDER ? "/smart-quiz-generator" : "/",
 })
