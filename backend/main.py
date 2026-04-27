@@ -53,5 +53,7 @@ if __name__ == "__main__":
     # Start the server using Uvicorn
     # Line explanation:
     # 1. host 0.0.0.0: Bind to all interfaces (required for Docker/Cloud).
-    # 2. port 8000: Standard API port.
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # 2. port: Use PORT env var (standard for Render/Heroku) or default to 8000.
+    import os
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
