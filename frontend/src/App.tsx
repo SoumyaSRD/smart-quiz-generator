@@ -1,5 +1,5 @@
 import React from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
 import SetupPage from './pages/SetupPage';
 import QuizPage from './pages/QuizPage';
 import ResultPage from './pages/ResultPage';
@@ -13,7 +13,7 @@ const App: React.FC = () => {
   // Use basename from environment (Standard for Vite/GitHub Pages)
   const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-  const router = createBrowserRouter([
+  const router = createHashRouter([
     {
       path: "/login",
       element: <LoginPage />,

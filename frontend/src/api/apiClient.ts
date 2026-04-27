@@ -3,6 +3,8 @@ import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
+console.log('Current API Base URL:', API_BASE_URL);
+
 if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
   console.warn('WARNING: VITE_API_URL is not defined. API calls will default to the current origin, which may fail if the backend is hosted elsewhere.');
 }
